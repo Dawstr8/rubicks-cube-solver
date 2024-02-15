@@ -36,30 +36,30 @@ cycles = {
     'F': [
         [8, 10, 15, 13],
         [9, 12, 14, 11],
-        [5, 16, 45, 39],
-        [6, 19, 46, 36],
-        [7, 21, 47, 34]
+        [5, 16, 42, 39],
+        [6, 19, 41, 36],
+        [7, 21, 40, 34]
     ],
     'R': [
         [16, 18, 23, 21],
         [17, 20, 22, 19],
-        [7, 24, 40, 15],
-        [4, 27, 43, 12],
-        [2, 29, 45, 10]
+        [7, 24, 47, 15],
+        [4, 27, 44, 12],
+        [2, 29, 42, 10]
     ],
     'B': [
         [24, 26, 31, 29],
         [25, 28, 30, 27],
-        [2, 32, 42, 23],
-        [1, 35, 41, 20],
-        [0, 37, 40, 18]
+        [2, 32, 45, 23],
+        [1, 35, 46, 20],
+        [0, 37, 47, 18]
     ],
     'L': [
-        [32, 34, 39, 27],
+        [32, 34, 39, 37],
         [33, 36, 38, 35],
-        [0, 8, 47, 31],
-        [3, 11, 44, 28],
-        [5, 13, 42, 26]
+        [0, 8, 40, 31],
+        [3, 11, 43, 28],
+        [5, 13, 45, 26]
     ],
     'D': [
         [40, 42, 47, 45],
@@ -79,9 +79,71 @@ def cycles_to_matrix(cycles):
         
     return permutation
 
+def draw_cube(cube):
+    face_center_id = 4
+    # first face
+    for i in range(9):
+        after_center = -1 if i > face_center_id else 0
+        if i == face_center_id:
+            print(0, end="")
+        else:
+            print(cube[i + after_center], end="")
+
+        # new line after 3, 6, 9 iterations
+        if (i + 1) % 3 == 0:
+            print('')
+
+    second_face_id = 1
+
+    # print first row
+    for i in range(4):
+        current_face_id = second_face_id + i
+        for j in range(3):
+            print(cube[current_face_id * 8 + j], end="")
+        print(' ', end="")
+
+    print('')
+
+    # print second row
+    for i in range(4):
+        current_face_id = second_face_id + i
+        # second row consists of 3rd block of face, center and 4th block
+        print(cube[current_face_id * 8 + 3], end="")
+        print(current_face_id, end="")
+        print(cube[current_face_id * 8 + 4], end="")
+        print(' ', end="")
+
+    print('')
+
+    # print third row
+    for i in range(4):
+        current_face_id = second_face_id + i
+        # third row starts at 5th block of face
+        for j in range(3):
+            print(cube[current_face_id * 8 + j + 5], end="")
+        print(' ', end="")
+
+    print('')
+
+    # last face
+    last_face_id = 5
+    for i in range(9):
+        after_center = -1 if i > face_center_id else 0
+        if i == face_center_id:
+            print(last_face_id, end="")
+        else:
+            print(cube[last_face_id * 8 + i + after_center], end="")
+
+        # new line after 3, 6, 9 iterations
+        if (i + 1) % 3 == 0:
+            print('')
+
+    print('')
+
 permutations = {k: cycles_to_matrix(v) for k, v in cycles.items()}
 solved_cube = [i for i in range(6) for j in range(8)]
 
 # test purposes
-new_cube = np.matmul(permutations['D'], solved_cube)
+new_cube = np.matmul(permutations['B'], solved_cube)
 print(new_cube)
+draw_cube(new_cube)
