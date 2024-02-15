@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+from numpy.linalg import matrix_power
 
 # 0 - white, 1 - red, 2 - blue, 3 - orange, 4 - green, 5 - yellow
 #     000
@@ -16,7 +17,7 @@ import numpy as np
 
 N = 8 * 6
 
-permutations = [
+possible_permutations = [
     'T', 'T2', 'Tp',
     'F', 'F2', 'Fp',
     'R', 'R2', 'Rp',
@@ -79,71 +80,94 @@ def cycles_to_matrix(cycles):
         
     return permutation
 
-def draw_cube(cube):
-    face_center_id = 4
-    # first face
-    for i in range(9):
-        after_center = -1 if i > face_center_id else 0
-        if i == face_center_id:
-            print(0, end="")
-        else:
-            print(cube[i + after_center], end="")
-
-        # new line after 3, 6, 9 iterations
-        if (i + 1) % 3 == 0:
-            print('')
-
-    second_face_id = 1
-
-    # print first row
-    for i in range(4):
-        current_face_id = second_face_id + i
-        for j in range(3):
-            print(cube[current_face_id * 8 + j], end="")
-        print(' ', end="")
-
-    print('')
-
-    # print second row
-    for i in range(4):
-        current_face_id = second_face_id + i
-        # second row consists of 3rd block of face, center and 4th block
-        print(cube[current_face_id * 8 + 3], end="")
-        print(current_face_id, end="")
-        print(cube[current_face_id * 8 + 4], end="")
-        print(' ', end="")
-
-    print('')
-
-    # print third row
-    for i in range(4):
-        current_face_id = second_face_id + i
-        # third row starts at 5th block of face
-        for j in range(3):
-            print(cube[current_face_id * 8 + j + 5], end="")
-        print(' ', end="")
-
-    print('')
-
-    # last face
-    last_face_id = 5
-    for i in range(9):
-        after_center = -1 if i > face_center_id else 0
-        if i == face_center_id:
-            print(last_face_id, end="")
-        else:
-            print(cube[last_face_id * 8 + i + after_center], end="")
-
-        # new line after 3, 6, 9 iterations
-        if (i + 1) % 3 == 0:
-            print('')
-
-    print('')
-
 permutations = {k: cycles_to_matrix(v) for k, v in cycles.items()}
-solved_cube = [i for i in range(6) for j in range(8)]
 
-# test purposes
-new_cube = np.matmul(permutations['B'], solved_cube)
-print(new_cube)
-draw_cube(new_cube)
+class Cube:
+    def __init__(self):
+        self.cube = [i for i in range(6) for j in range(8)]
+        self.last_move = 0
+
+    def draw_cube(self):
+        cube = self.cube
+        face_center_id = 4
+        # first face
+        for i in range(9):
+            after_center = -1 if i > face_center_id else 0
+            if i == face_center_id:
+                print(0, end="")
+            else:
+                print(cube[i + after_center], end="")
+
+            # new line after 3, 6, 9 iterations
+            if (i + 1) % 3 == 0:
+                print('')
+
+        second_face_id = 1
+
+        # print first row
+        for i in range(4):
+            current_face_id = second_face_id + i
+            for j in range(3):
+                print(cube[current_face_id * 8 + j], end="")
+            print(' ', end="")
+
+        print('')
+
+        # print second row
+        for i in range(4):
+            current_face_id = second_face_id + i
+            # second row consists of 3rd block of face, center and 4th block
+            print(cube[current_face_id * 8 + 3], end="")
+            print(current_face_id, end="")
+            print(cube[current_face_id * 8 + 4], end="")
+            print(' ', end="")
+
+        print('')
+
+        # print third row
+        for i in range(4):
+            current_face_id = second_face_id + i
+            # third row starts at 5th block of face
+            for j in range(3):
+                print(cube[current_face_id * 8 + j + 5], end="")
+            print(' ', end="")
+
+        print('')
+
+        # last face
+        last_face_id = 5
+        for i in range(9):
+            after_center = -1 if i > face_center_id else 0
+            if i == face_center_id:
+                print(last_face_id, end="")
+            else:
+                print(cube[last_face_id * 8 + i + after_center], end="")
+
+            # new line after 3, 6, 9 iterations
+            if (i + 1) % 3 == 0:
+                print('')
+
+        print('')
+
+    def apply(self, move):
+        times = 0
+        if len(move) == 1:
+            times = 1
+        elif move[1] == '2':
+            times = 2
+        else:
+            times = 3
+        permutation = permutations[move[0]]
+
+        self.cube = np.matmul(matrix_power(permutation, times), self.cube)
+
+    def shuffle_cube(self, n=100):
+        random_permutations = np.random.choice(possible_permutations, size=n, replace=True)
+        print(random_permutations)
+        for random_permutation in random_permutations:
+            self.apply(random_permutation)
+
+
+cube = Cube()
+cube.shuffle_cube()
+cube.draw_cube()
