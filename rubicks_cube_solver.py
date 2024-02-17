@@ -1,12 +1,13 @@
 from rubicks_cube import Cube
-from dijkstra import dijkstra
+from bfs import BFS
 
 import time
 
 cube = Cube()
-cube.shuffle(100)
-cube.draw()
+cube.shuffle(4)
+end_cube = Cube()
 
 start = time.time()
-print(len(dijkstra(cube, 3)))
+moves_sequence = BFS(cube, end_cube)
 print(time.time() - start)
+print(moves_sequence)

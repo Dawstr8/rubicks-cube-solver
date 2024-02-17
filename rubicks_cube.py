@@ -84,7 +84,8 @@ permutations = {k: cycles_to_matrix(v) for k, v in cycles.items()}
 
 class Cube:
     def __init__(self):
-        self.state = [i for i in range(6) for j in range(8)]
+        self.state = np.array([i for i in range(6) for j in range(8)])
+        self.last_action = ''
 
     def draw(self):
         cube = self.state
@@ -159,14 +160,21 @@ class Cube:
 
         permutation = permutations[action[0]]
         self.state = np.matmul(matrix_power(permutation, times), self.state)
+        self.last_action = action
 
     def shuffle(self, n=100):
         random_actions_seq = np.random.choice(self.possible_actions(), size=n, replace=True)
+        print(random_actions_seq)
         for random_action in random_actions_seq:
             self.apply(random_action)
+        self.last_action = ''
 
     def possible_actions(self):
-        return possible_actions
+        if len(self.last_action) == 0:
+            return possible_actions
+        
+        return [x for x in possible_actions if x[0] != self.last_action[0]]
     
     def to_string(self):
-        return np.array2string(self.state)
+        arr_repr = np.array_repr(self.state)
+        return hash(arr_repr)
