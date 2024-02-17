@@ -80,7 +80,18 @@ def cycles_to_matrix(cycles):
         
     return permutation
 
-permutations = {k: cycles_to_matrix(v) for k, v in cycles.items()}
+permutations = {}
+for action in possible_actions:
+    permutation = cycles_to_matrix(cycles[action[0]])
+    times = 0
+    if len(action) == 1:
+        times = 1
+    elif action[1] == '2':
+        times = 2
+    else:
+        times = 3
+
+    permutations[action] = matrix_power(permutation, times)
 
 class Cube:
     def __init__(self):
@@ -150,16 +161,8 @@ class Cube:
         print('')
 
     def apply(self, action):
-        times = 0
-        if len(action) == 1:
-            times = 1
-        elif action[1] == '2':
-            times = 2
-        else:
-            times = 3
-
-        permutation = permutations[action[0]]
-        self.state = np.matmul(matrix_power(permutation, times), self.state)
+        permutation = permutations[action]
+        self.state = np.matmul(permutation, self.state)
         self.last_action = action
 
     def shuffle(self, n=100):

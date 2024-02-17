@@ -1,7 +1,9 @@
 from collections import deque
 import copy
+import time
 
 def BFS(start, end, max_depth=10):
+    start_time = time.time()
     queue = deque([start])
     actions_sequence = {}
     actions_sequence[start.to_string()] = []
@@ -13,9 +15,10 @@ def BFS(start, end, max_depth=10):
         state_actions_sequence = len(actions_sequence[state.to_string()])
         if state_actions_sequence > current_distance:
             current_distance += 1
-            print(current_distance)
+            print(time.time() - start_time, current_distance)
 
         if state_actions_sequence > max_depth or state.to_string() == end.to_string():
+            print(time.time() - start_time)
             return actions_sequence[end.to_string()]
 
         for action in state.possible_actions():
