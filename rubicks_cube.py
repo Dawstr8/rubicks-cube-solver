@@ -98,6 +98,9 @@ class Cube:
         self.state = np.array([i for i in range(6) for j in range(8)])
         self.last_action = ''
 
+    def __gt__(self, other):
+        self.to_string() > other.to_string()
+
     def draw(self):
         cube = self.state
         face_center_id = 4
