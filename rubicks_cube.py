@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 from numpy.linalg import matrix_power
+import random
 
 # 0 - white, 1 - red, 2 - blue, 3 - orange, 4 - green, 5 - yellow
 #     000
@@ -97,9 +98,10 @@ class Cube:
     def __init__(self):
         self.state = np.array([i for i in range(6) for j in range(8)])
         self.last_action = ''
+        self.path_len = 0
 
-    def __gt__(self, other):
-        self.to_string() > other.to_string()
+    def __lt__(self, other):
+        return self.path_len < other.path_len
 
     def draw(self):
         cube = self.state
@@ -167,13 +169,14 @@ class Cube:
         permutation = permutations[action]
         self.state = np.matmul(permutation, self.state)
         self.last_action = action
+        self.path_len += 1
 
     def shuffle(self, n=100):
         random_actions_seq = np.random.choice(self.possible_actions(), size=n, replace=True)
-        print(random_actions_seq)
+        print('shuffle', random_actions_seq)
         for random_action in random_actions_seq:
             self.apply(random_action)
-        self.last_action = ''
+        self.path_len = 0
 
     def possible_actions(self):
         if len(self.last_action) == 0:
@@ -183,4 +186,4 @@ class Cube:
     
     def to_string(self):
         arr_repr = np.array_repr(self.state)
-        return hash(arr_repr)
+        return ''.join([str(num) for num in arr_repr])
