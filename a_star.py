@@ -1,27 +1,45 @@
-from queue import PriorityQueue
 import copy
 import time
 from multiprocessing import Process, Manager
+import heapq
 
 INFINITY = 99999999999999999
 
+class PQ:
+    def __init__(self):
+        self.queue = []
+    
+    def push(self, p, a):
+        heapq.heappush(self.queue, (p, a))
+
+    def pop(self):
+        return heapq.heappop(self.queue)
+    
+    def empty(self):
+        return len(self.queue) == 0
+    
+    def is_in(self, value):
+        return value in self.queue
+
 def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=[], goal_closed_set=[], start_finished=[False, None], end_finished=[False, None]):
     start_time = time.time()
-    start = copy.deepcopy(start)
-    goal = copy.deepcopy(goal)
     str_start = start.to_string()
     str_goal = goal.to_string()
 
     # priority queue to visit most promising states first
-    pq = PriorityQueue()
-    pq.put((0, start))
+    pq = PQ()
+    pq.push(0, start)
 
     # tracking state of the prioriy queue
     open_set = set()
     open_set.add(str_start)
+
+    # tracking found nodes to use by second A*
     closed_set.append(str_start)
 
+    # kept to be able to watch history of nodes
     came_from = {}
+
     # real distance from the start
     g_score = {}
     g_score[str_start] = 0
@@ -39,10 +57,11 @@ def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=
 
     while not pq.empty():
         # take most promising state
-        priority, current = pq.get()
+        current = pq.pop()
         str_current = current.to_string()
         open_set.remove(str_current)
 
+        # finish possibilities
         if end_finished[0]:
             # print('second search found full path')
             return []
@@ -66,7 +85,7 @@ def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=
             result_list.extend(reconstruct_path(came_from, visited_nodes, current))
             return result_list
         
-        if max_g_value and max_g_value <= g_score[str_current]:
+        if max_g_value and max_g_value < g_score[str_current]:
             continue
         
         for action in current.possible_actions():
@@ -77,17 +96,17 @@ def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=
             str_neighbor = neighbor.to_string()
             if str_neighbor not in g_score or new_g_score < g_score[str_neighbor]:
                 came_from[str_neighbor] = str_current
+                visited_nodes[str_neighbor] = neighbor
                 g_score[str_neighbor] = new_g_score
                 if str_neighbor not in h_score:
                     h_score[str_neighbor] = heuristic(neighbor.state, goal.state)
 
                 f_score[str_neighbor] = new_g_score + h_score[str_neighbor]
                 if str_neighbor not in open_set:
-                    pq.put((f_score[str_neighbor], neighbor))
+                    pq.push(f_score[str_neighbor], neighbor)
                     open_set.add(str_neighbor)
                     closed_set.append(str_neighbor)
-                    visited_nodes[str_neighbor] = neighbor
-
+        
     return []
 
 def reconstruct_path(came_from, visited_nodes, current):

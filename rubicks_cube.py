@@ -97,11 +97,14 @@ for action in possible_actions:
 class Cube:
     def __init__(self):
         self.state = np.array([i for i in range(6) for j in range(8)])
-        self.last_action = ''
+        self.last_action = None
         self.path_len = 0
 
     def __lt__(self, other):
         return self.path_len < other.path_len
+    
+    def __eq__(self, other):
+        return self.to_string() == other.to_string()
 
     def draw(self):
         cube = self.state
@@ -179,11 +182,13 @@ class Cube:
         self.path_len = 0
 
     def possible_actions(self):
-        if len(self.last_action) == 0:
+        if self.last_action is None:
             return possible_actions
         
         return [x for x in possible_actions if x[0] != self.last_action[0]]
     
     def to_string(self):
-        arr_repr = np.array_repr(self.state)
-        return ''.join([str(num) for num in arr_repr])
+        to_string = ''
+        for elem in self.state:
+            to_string += str(elem)
+        return to_string
