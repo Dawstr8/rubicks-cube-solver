@@ -100,11 +100,17 @@ class Cube:
         self.last_action = None
         self.path_len = 0
 
+    def __str__(self):
+        to_string = ''
+        for elem in self.state:
+            to_string += str(elem)
+        return to_string
+
     def __lt__(self, other):
         return self.path_len < other.path_len
     
     def __eq__(self, other):
-        return self.to_string() == other.to_string()
+        return str(self) == str(other)
 
     def draw(self):
         cube = self.state
@@ -186,9 +192,3 @@ class Cube:
             return possible_actions
         
         return [x for x in possible_actions if x[0] != self.last_action[0]]
-    
-    def to_string(self):
-        to_string = ''
-        for elem in self.state:
-            to_string += str(elem)
-        return to_string
