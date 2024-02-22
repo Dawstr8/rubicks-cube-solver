@@ -47,9 +47,10 @@ class Node:
         
         return neighbors
 
-def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=[], goal_closed_set=[], start_finished=[False, None], end_finished=[False, None]):
+def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], other_visited_set=[], start_search_params=[False, None], goal_search_params=[False, None]):
     start_time = time.time()
     visited = { str(start): Node(copy.deepcopy(start), None, 0, heuristic(start.state, goal.state)) }
+    visited_set.append(str(start))
 
     pq = PQ()
     pq.push(0, str(start))
@@ -59,22 +60,12 @@ def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=
         current = visited[current_key]
 
         # finish possibilities
-        if end_finished[0]:
-            return []
-        
-        if end_finished[1] is not None:
-            result_list.extend(reconstruct_path(visited, end_finished[1]))
-            return result_list
-        
-        if current == goal or current_key in goal_closed_set:
+        [is_finished, final_key] = is_search_finished(current, goal, start_search_params, goal_search_params, other_visited_set)
+        print(is_finished, final_key)
+        if is_finished and final_key is not None:
             print(time.time() - start_time)
-            if current == goal:
-                start_finished[0] = True
-            else:
-                start_finished[1] = current_key
-                
-            result_list.extend(reconstruct_path(visited, current_key))
-            return result_list
+            path.extend(reconstruct_path(visited, final_key))
+            return
         
         if max_g_value and max_g_value < current.g:
             continue
@@ -83,11 +74,29 @@ def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=
             neighbor_key = str(neighbor)
             if neighbor_key not in visited or neighbor.g < visited[neighbor_key].g:
                 visited[neighbor_key] = neighbor
-                if not pq.includes(neighbor_key):
-                    pq.push(neighbor.f(), neighbor_key)
-                    closed_set.append(neighbor_key)
+                pq.push(neighbor.f(), neighbor_key)
+                visited_set.append(neighbor_key)
         
     return []
+
+def is_search_finished(current, goal, start_search_params, goal_search_params, other_visited_set):
+    current_key = str(current)
+    [other_found_full_path, shared_from_other_set] = goal_search_params
+
+    if other_found_full_path:
+        return [True, None]
+        
+    if shared_from_other_set is not None:
+        return [True, shared_from_other_set]
+    
+    if current == goal or current_key in other_visited_set:
+        if current == goal:
+            start_search_params[0] = True
+        else:
+            start_search_params[1] = current_key
+        return [True, current_key]
+    
+    return [False, None]
 
 def reconstruct_path(visited, current_key):
     path = []
@@ -114,15 +123,17 @@ def flip_path(path):
 
 def A_star_both_sides(start, goal, heuristic, max_g_value=None):
     manager = Manager()
-    start_shared_set = manager.list()
-    goal_shared_set = manager.list()
-    result_list_start = manager.list()
-    result_list_goal = manager.list()
-    start_finished = manager.list([False, None])
-    end_finished = manager.list([False, None])
+    start_visited_set = manager.list()
+    goal_visited_set = manager.list()
+    path_from_start = manager.list()
+    path_from_goal = manager.list()
 
-    p1 = Process(target=A_star, args=(start, goal, heuristic, max_g_value, result_list_start, start_shared_set, goal_shared_set, start_finished, end_finished))
-    p2 = Process(target=A_star, args=(goal, start, heuristic, max_g_value, result_list_goal, goal_shared_set, start_shared_set, end_finished, start_finished))
+    # found full path? first found from other set
+    start_search_params = manager.list([False, None])
+    end_search_params = manager.list([False, None])
+
+    p1 = Process(target=A_star, args=(start, goal, heuristic, max_g_value, path_from_start, start_visited_set, goal_visited_set, start_search_params, end_search_params))
+    p2 = Process(target=A_star, args=(goal, start, heuristic, max_g_value, path_from_goal, goal_visited_set, start_visited_set, end_search_params, start_search_params))
 
     # Start the processes
     p1.start()
@@ -132,8 +143,7 @@ def A_star_both_sides(start, goal, heuristic, max_g_value=None):
     p1.join()
     p2.join()
 
-    print(list(result_list_start), list(result_list_goal))
-    path_from_start = list(result_list_start)
-    path_from_end = flip_path(list(result_list_goal))
-
-    return path_from_start + path_from_end
+    path_from_start = list(path_from_start)
+    path_from_goal = flip_path(list(path_from_goal))
+    print(path_from_start, path_from_goal)
+    return path_from_start + path_from_goal
