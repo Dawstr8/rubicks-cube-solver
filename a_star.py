@@ -10,108 +10,91 @@ class PQ:
         self.queue = []
         self.lookup_set = set()
     
-    def push(self, priority, value):
-        heapq.heappush(self.queue, (priority, value))
-        self.lookup_set.add(str(value))
+    def push(self, priority, item):
+        heapq.heappush(self.queue, (priority, item))
+        self.lookup_set.add(item)
 
     def pop(self):
-        (priority, value) = heapq.heappop(self.queue)
-        self.lookup_set.remove(str(value))
-        return value
+        (priority, item) = heapq.heappop(self.queue)
+        self.lookup_set.remove(item)
+        return item
     
     def empty(self):
         return len(self.queue) == 0
     
-    def includes(self, value):
-        return str(value) in self.lookup_set
+    def includes(self, item):
+        return item in self.lookup_set
+
+class Node:
+    def __init__(self, cube, parent_key=None, g=0, h=INFINITY):
+        self.cube = cube
+        self.parent_key = parent_key
+        self.g = g
+        self.h = h
+
+    def __str__(self):
+        return str(self.cube)
+
+    def f(self):
+        return self.g + self.h
+    
+    def neighbors(self, heuristic, goal):
+        neighbors = []
+        for action in self.cube.possible_actions():
+            neighbor_cube = copy.deepcopy(self.cube)
+            neighbor_cube.apply(action)
+            neighbors.append(Node(neighbor_cube, str(self), self.g + 1, heuristic(neighbor_cube.state, goal.state)))
+        
+        return neighbors
 
 def A_star(start, goal, heuristic, max_g_value=None, result_list=[], closed_set=[], goal_closed_set=[], start_finished=[False, None], end_finished=[False, None]):
     start_time = time.time()
-    str_start = str(start)
-    str_goal = str(goal)
+    visited = { str(start): Node(copy.deepcopy(start), None, 0, heuristic(start.state, goal.state)) }
 
-    # priority queue to visit most promising states first
     pq = PQ()
-    pq.push(0, start)
-
-    # tracking found nodes to use by second A*
-    closed_set.append(str_start)
-
-    # kept to be able to watch history of nodes
-    came_from = {}
-
-    # real distance from the start
-    g_score = {}
-    g_score[str_start] = 0
-
-    # heuristic distance to the goal
-    h_score = {}
-    h_score[str_start] = heuristic(start.state, goal.state)
-
-    # sum of real distance from start and heuristic to the goal
-    f_score = {}
-    f_score[str_start] = h_score[str_start]
-
-    visited_nodes = {}
-    visited_nodes[str_start] = start
-
+    pq.push(0, str(start))
     while not pq.empty():
         # take most promising state
-        current = pq.pop()
-        str_current = str(current)
+        current_key = pq.pop()
+        current = visited[current_key]
 
         # finish possibilities
         if end_finished[0]:
-            # print('second search found full path')
             return []
         
         if end_finished[1] is not None:
-            # print('retrieving path from found node')
-            # tutaj nie może być end_finished, bo ten ma inny last move
-            end_node = visited_nodes[end_finished[1]]
-            result_list.extend(reconstruct_path(came_from, visited_nodes, end_node))
+            result_list.extend(reconstruct_path(visited, end_finished[1]))
             return result_list
         
-        if str_current == str_goal or str_current in goal_closed_set:
+        if current == goal or current_key in goal_closed_set:
             print(time.time() - start_time)
-            if str_current == str_goal:
-                # print('full path found')
+            if current == goal:
                 start_finished[0] = True
             else:
-                # print('node already in second A*')
-                start_finished[1] = str_current
+                start_finished[1] = current_key
                 
-            result_list.extend(reconstruct_path(came_from, visited_nodes, current))
+            result_list.extend(reconstruct_path(visited, current_key))
             return result_list
         
-        if max_g_value and max_g_value < g_score[str_current]:
+        if max_g_value and max_g_value < current.g:
             continue
         
-        for action in current.possible_actions():
-            # create neighbor from possible action
-            neighbor = copy.deepcopy(current)
-            neighbor.apply(action)
-            new_g_score = g_score[str_current] + 1
-            str_neighbor = str(neighbor)
-            if str_neighbor not in g_score or new_g_score < g_score[str_neighbor]:
-                came_from[str_neighbor] = str_current
-                visited_nodes[str_neighbor] = neighbor
-                g_score[str_neighbor] = new_g_score
-                if str_neighbor not in h_score:
-                    h_score[str_neighbor] = heuristic(neighbor.state, goal.state)
-
-                f_score[str_neighbor] = new_g_score + h_score[str_neighbor]
-                if not pq.includes(neighbor):
-                    pq.push(f_score[str_neighbor], neighbor)
-                    closed_set.append(str_neighbor)
+        for neighbor in current.neighbors(heuristic, goal):
+            neighbor_key = str(neighbor)
+            if neighbor_key not in visited or neighbor.g < visited[neighbor_key].g:
+                visited[neighbor_key] = neighbor
+                if not pq.includes(neighbor_key):
+                    pq.push(neighbor.f(), neighbor_key)
+                    closed_set.append(neighbor_key)
         
     return []
 
-def reconstruct_path(came_from, visited_nodes, current):
+def reconstruct_path(visited, current_key):
     path = []
-    while str(current) in came_from:
-        path.append(current.last_action)
-        current = visited_nodes[came_from[str(current)]]
+    current = visited[current_key]
+    while current.parent_key in visited:
+        path.append(current.cube.last_action)
+        current = visited[current.parent_key]
 
     return path[::-1]
 
@@ -150,11 +133,6 @@ def A_star_both_sides(start, goal, heuristic, max_g_value=None):
     p2.join()
 
     print(list(result_list_start), list(result_list_goal))
-    # if start_finished[1] is not None:
-    #     print('start', start_finished[1])
-    # elif end_finished[1] is not None:
-    #     print('end', end_finished[1])
-
     path_from_start = list(result_list_start)
     path_from_end = flip_path(list(result_list_goal))
 
