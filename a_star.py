@@ -1,5 +1,6 @@
 import copy
 import time
+import random
 from multiprocessing import Process, Manager
 import heapq
 
@@ -47,9 +48,10 @@ class Node:
             neighbor_cube.apply(action)
             neighbors.append(Node(neighbor_cube, str(self), self.g + 1, heuristic(neighbor_cube.state, goal.state)))
         
+        random.shuffle(neighbors)
         return neighbors
 
-def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], other_visited_set=[], start_search_params=[False, None], goal_search_params=[False, None]):
+def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], other_visited_set=[], start_search_params=[False, None], goal_search_params=[False, None], search_name=None):
     start_time = time.time()
     visited = { str(start): Node(copy.deepcopy(start), None, 0, heuristic(start.state, goal.state)) }
     visited_set.append(str(start))
@@ -63,9 +65,10 @@ def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], ot
 
         # finish possibilities
         [is_finished, final_key] = is_search_finished(current, goal, start_search_params, goal_search_params, other_visited_set)
-        if is_finished and final_key is not None:
-            print(time.time() - start_time)
-            path.extend(reconstruct_path(visited, final_key))
+        if is_finished:
+            print(search_name, time.time() - start_time)
+            if final_key is not None:
+                path.extend(reconstruct_path(visited, final_key))
             return
         
         if max_g_value and max_g_value < current.g:
@@ -133,8 +136,8 @@ def A_star_both_sides(start, goal, heuristic, max_g_value=None):
     start_search_params = manager.list([False, None])
     end_search_params = manager.list([False, None])
 
-    p1 = Process(target=A_star, args=(start, goal, heuristic, max_g_value, path_from_start, start_visited_set, goal_visited_set, start_search_params, end_search_params))
-    p2 = Process(target=A_star, args=(goal, start, heuristic, max_g_value, path_from_goal, goal_visited_set, start_visited_set, end_search_params, start_search_params))
+    p1 = Process(target=A_star, args=(start, goal, heuristic, max_g_value, path_from_start, start_visited_set, goal_visited_set, start_search_params, end_search_params, 'start'))
+    p2 = Process(target=A_star, args=(goal, start, heuristic, max_g_value, path_from_goal, goal_visited_set, start_visited_set, end_search_params, start_search_params, 'goal'))
 
     # Start the processes
     p1.start()
