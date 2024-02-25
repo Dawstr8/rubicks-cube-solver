@@ -95,9 +95,8 @@ for action in possible_actions:
     permutations[action] = matrix_power(permutation, times)
 
 class Cube:
-    def __init__(self):
-        self.state = np.array([i for i in range(6) for j in range(8)])
-        self.last_action = None
+    def __init__(self, state = np.array([i for i in range(6) for j in range(8)])):
+        self.state = state
 
     def __str__(self):
         to_string = ''
@@ -172,17 +171,19 @@ class Cube:
 
     def apply(self, action):
         permutation = permutations[action]
-        self.state = np.matmul(permutation, self.state)
-        self.last_action = action
+        return Cube(np.matmul(permutation, self.state))
 
-    def shuffle(self, n=100):
-        random_actions_seq = np.random.choice(self.possible_actions(), size=n, replace=True)
-        print('shuffle', random_actions_seq)
-        for random_action in random_actions_seq:
-            self.apply(random_action)
-
-    def possible_actions(self):
-        if self.last_action is None:
-            return possible_actions
+def get_shuffled_cube(n=100):
+    random_actions_seq = np.random.choice(get_possible_actions(), size=n, replace=True)
+    print('shuffle', random_actions_seq)
+    shuffled_cube = Cube()
+    for random_action in random_actions_seq:
+        shuffled_cube = shuffled_cube.apply(random_action)
         
-        return [x for x in possible_actions if x[0] != self.last_action[0]]
+    return shuffled_cube
+
+def get_possible_actions(last_action=None):
+    if last_action is None:
+        return possible_actions
+    
+    return [x for x in possible_actions if x[0] != last_action[0]]

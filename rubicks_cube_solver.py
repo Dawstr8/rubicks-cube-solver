@@ -1,4 +1,4 @@
-from rubicks_cube import Cube
+from rubicks_cube import Cube, get_shuffled_cube
 from bfs import BFS
 from a_star import A_star, A_star_both_sides
 
@@ -15,8 +15,7 @@ def heuristic(s1, s2):
 # print(path)
 
 if __name__ == "__main__":
-    cube = Cube()
-    cube.shuffle(6)
-    end_cube = Cube()
-    path = A_star_both_sides(cube, end_cube, heuristic, 10)
+    start_cube = get_shuffled_cube(30)
+    goal_cube = Cube()
+    path = A_star_both_sides(start_cube, goal_cube, heuristic, 15)
     print('finished', path)

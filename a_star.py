@@ -3,6 +3,7 @@ import time
 import random
 from multiprocessing import Process, Manager
 import heapq
+from rubicks_cube import get_possible_actions
 
 INFINITY = 99999999999999999
 
@@ -29,11 +30,12 @@ class PQ:
         return item in self.lookup_set and self.lookup_set[item] > 0
 
 class Node:
-    def __init__(self, cube, parent_key=None, g=0, h=INFINITY):
+    def __init__(self, cube, parent_key=None, g=0, h=INFINITY, last_action=None):
         self.cube = cube
         self.parent_key = parent_key
         self.g = g
         self.h = h
+        self.last_action = last_action
 
     def __str__(self):
         return str(self.cube)
@@ -43,10 +45,9 @@ class Node:
     
     def neighbors(self, heuristic, goal):
         neighbors = []
-        for action in self.cube.possible_actions():
-            neighbor_cube = copy.deepcopy(self.cube)
-            neighbor_cube.apply(action)
-            neighbors.append(Node(neighbor_cube, str(self), self.g + 1, heuristic(neighbor_cube.state, goal.state)))
+        for action in get_possible_actions(self.last_action):
+            neighbor_cube = self.cube.apply(action)
+            neighbors.append(Node(neighbor_cube, str(self), self.g + 1, heuristic(neighbor_cube.state, goal.state), action))
         
         random.shuffle(neighbors)
         return neighbors
@@ -106,7 +107,7 @@ def reconstruct_path(visited, current_key):
     path = []
     current = visited[current_key]
     while current.parent_key in visited:
-        path.append(current.cube.last_action)
+        path.append(current.last_action)
         current = visited[current.parent_key]
 
     return path[::-1]
