@@ -98,16 +98,12 @@ class Cube:
     def __init__(self):
         self.state = np.array([i for i in range(6) for j in range(8)])
         self.last_action = None
-        self.path_len = 0
 
     def __str__(self):
         to_string = ''
         for elem in self.state:
             to_string += str(elem)
         return to_string
-
-    def __lt__(self, other):
-        return self.path_len < other.path_len
     
     def __eq__(self, other):
         return str(self) == str(other)
@@ -178,14 +174,12 @@ class Cube:
         permutation = permutations[action]
         self.state = np.matmul(permutation, self.state)
         self.last_action = action
-        self.path_len += 1
 
     def shuffle(self, n=100):
         random_actions_seq = np.random.choice(self.possible_actions(), size=n, replace=True)
         print('shuffle', random_actions_seq)
         for random_action in random_actions_seq:
             self.apply(random_action)
-        self.path_len = 0
 
     def possible_actions(self):
         if self.last_action is None:
