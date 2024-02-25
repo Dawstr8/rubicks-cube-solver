@@ -97,15 +97,19 @@ for action in possible_actions:
 class Cube:
     def __init__(self, state = np.array([i for i in range(6) for j in range(8)])):
         self.state = state
+        self.name = self.create_name()
 
     def __str__(self):
+        return self.name
+    
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def create_name(self):
         to_string = ''
         for elem in self.state:
             to_string += str(elem)
         return to_string
-    
-    def __eq__(self, other):
-        return str(self) == str(other)
 
     def draw(self):
         cube = self.state
@@ -174,12 +178,15 @@ class Cube:
         return Cube(np.matmul(permutation, self.state))
 
 def get_shuffled_cube(n=100):
-    random_actions_seq = np.random.choice(get_possible_actions(), size=n, replace=True)
-    print('shuffle', random_actions_seq)
+    random_action_seq = []
     shuffled_cube = Cube()
-    for random_action in random_actions_seq:
+    random_action = None
+    for i in range(n):
+        random_action = random.choice(get_possible_actions(random_action))
+        random_action_seq.append(random_action)
         shuffled_cube = shuffled_cube.apply(random_action)
         
+    print('shuffle', random_action_seq)
     return shuffled_cube
 
 def get_possible_actions(last_action=None):

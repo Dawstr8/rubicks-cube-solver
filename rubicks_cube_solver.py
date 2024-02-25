@@ -10,12 +10,8 @@ def heuristic(s1, s2):
     
     return distance / 12.0
 
-# path = BFS(cube, end_cube)
-# path = A_star(cube, end_cube, heuristic)
-# print(path)
-
 if __name__ == "__main__":
-    start_cube = get_shuffled_cube(30)
+    start_cube = get_shuffled_cube(10)
     goal_cube = Cube()
-    path = A_star_both_sides(start_cube, goal_cube, heuristic, 15)
+    path = A_star_both_sides(start_cube, goal_cube, heuristic, 10)
     print('finished', path)
