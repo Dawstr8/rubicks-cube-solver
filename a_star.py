@@ -8,22 +8,24 @@ INFINITY = 99999999999999999
 class PQ:
     def __init__(self):
         self.queue = []
-        self.lookup_set = set()
+        self.lookup_set = {}
     
     def push(self, priority, item):
         heapq.heappush(self.queue, (priority, item))
-        self.lookup_set.add(item)
+        if not item in self.lookup_set:
+            self.lookup_set[item] = 0 
+        self.lookup_set[item] += 1
 
     def pop(self):
         (priority, item) = heapq.heappop(self.queue)
-        self.lookup_set.remove(item)
+        self.lookup_set[item] -= 1
         return item
     
     def empty(self):
         return len(self.queue) == 0
     
     def includes(self, item):
-        return item in self.lookup_set
+        return item in self.lookup_set and self.lookup_set[item] > 0
 
 class Node:
     def __init__(self, cube, parent_key=None, g=0, h=INFINITY):
@@ -61,7 +63,6 @@ def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], ot
 
         # finish possibilities
         [is_finished, final_key] = is_search_finished(current, goal, start_search_params, goal_search_params, other_visited_set)
-        print(is_finished, final_key)
         if is_finished and final_key is not None:
             print(time.time() - start_time)
             path.extend(reconstruct_path(visited, final_key))
