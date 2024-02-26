@@ -63,6 +63,8 @@ def A_star(start, goal, heuristic, max_g_value=None, path=[], visited_set=[], ot
         # take most promising state
         current_key = pq.pop()
         current = visited[current_key]
+        if search_name == 'start':
+            print(current.g, current.h, current.f())
 
         # finish possibilities
         [is_finished, final_key] = is_search_finished(current, goal, start_search_params, goal_search_params, other_visited_set)
